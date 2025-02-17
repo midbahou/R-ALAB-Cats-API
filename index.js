@@ -22,6 +22,8 @@ const API_KEY = "live_iZsLSGdcv82tlUVsmGabE38syOMpzSL6Nr29mhyqYmeiveHn6bPJjJsAL8
  * This function should execute immediately.
  */
 (async function initialLoad() {
+
+  let breeds = [];
   //* Retrieve a list of breeds from the cat API using fetch().
   try {
     const response = await fetch("https://api.thecatapi.com/v1/breeds", {
@@ -53,12 +55,22 @@ const API_KEY = "live_iZsLSGdcv82tlUVsmGabE38syOMpzSL6Nr29mhyqYmeiveHn6bPJjJsAL8
   } catch (error) {
     console.error(error);
   }
+
+  if (breeds.length > 0) {
+    // Call getBreedInfo with the first breed
+    getBreedInfo({ target: { value: breeds[0].id } })
+  } else {
+    console.error("No breeds found.");
+  }
+
 })();
 
 //* This function should execute immediately.
 //? so in case this function should execute immediately we can use an Immediately Invoked Function Expression (IIFE).
 // so no need to call it later
 // initialLoad();
+
+
 
 
 /**
@@ -75,6 +87,7 @@ const API_KEY = "live_iZsLSGdcv82tlUVsmGabE38syOMpzSL6Nr29mhyqYmeiveHn6bPJjJsAL8
  * - Each new selection should clear, re-populate, and restart the Carousel.
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
+
 breedSelect.addEventListener("change", getBreedInfo)
 
 // https://api.thecatapi.com/v1/breeds
@@ -101,9 +114,10 @@ async function getBreedInfo (e) {
   
 
     const carouselContent = document.getElementById("carouselInner");
-    carouselContent.innerHTML = "";
+    carouselContent.innerHTML = ""; // clear previous carousel items
     console.log(carouselContent);
 
+    infoDump.innerHTML = ""; // clear previous info
     
   
     breedsData.forEach((breed, index) => {
@@ -115,11 +129,29 @@ async function getBreedInfo (e) {
       const img = document.createElement("img");
       img.src = breed.url;
       img.alt = breed.breeds[0].name;
-      // img.classList.add("d-block", "w-100");
+      img.classList.add("d-block", "w-100");
       
       //* Append each of these new elements to the carousel.
-      carouselElement.appendChild(img)
-      carouselContent.appendChild(carouselElement)
+      carouselElement.appendChild(img); // Add image to the carousel element
+      carouselContent.appendChild(carouselElement); // Append each carousel item to the carouselInner
+
+
+      //? Use the other data you have been given to create an informational section within the infoDump element.
+      const breedInfo = document.createElement("div");
+      breedInfo.classList.add("breed-info");
+
+      breedInfo.innerHTML = `
+      <h2>${breed.breeds[0].name}</h2>
+      <p><strong>Origin:</strong> ${breed.breeds[0].origin}</p>
+      <p><strong>Weight:</strong> ${breed.breeds[0].weight.metric} kg</p>
+      <p><strong>Life Span:</strong> ${breed.breeds[0].life_span} years</p>
+      <p><strong>Temperament:</strong> ${breed.breeds[0].temperament}</p>
+      <p><strong>Description</strong>${breed.breeds[0].description}</p>
+      `;
+
+      infoDump.appendChild(breedInfo);
+
+
 
       
       // console.log(breed.url);
@@ -129,7 +161,10 @@ async function getBreedInfo (e) {
       // console.log(breed.breeds[0].life_span);
       // console.log(breed.breeds[0].origin);
       // console.log(breed.breeds[0].temperament);
-    })
+    });
+    
+    // **Restart the carousel**
+    $('#carouselExampleControls').carousel(0);  // Bootstrap-specific method to reset carousel to the first slide
     
   } catch (error) {
     console.error(error);
