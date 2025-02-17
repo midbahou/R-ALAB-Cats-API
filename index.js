@@ -1,5 +1,5 @@
 import * as Carousel from "./Carousel.js";
-import axios from "axios";
+// import axios from "axios";
 
 // The breed selection input element.
 const breedSelect = document.getElementById("breedSelect");
@@ -11,7 +11,7 @@ const progressBar = document.getElementById("progressBar");
 const getFavouritesBtn = document.getElementById("getFavouritesBtn");
 
 // Step 0: Store your API key here for reference and easy access.
-const API_KEY = "";
+const API_KEY = "live_iZsLSGdcv82tlUVsmGabE38syOMpzSL6Nr29mhyqYmeiveHn6bPJjJsAL828AhRO";
 
 /**
  * 1. Create an async function "initialLoad" that does the following:
@@ -21,6 +21,45 @@ const API_KEY = "";
  *  - Each option should display text equal to the name of the breed.
  * This function should execute immediately.
  */
+(async function initialLoad() {
+  //* Retrieve a list of breeds from the cat API using fetch().
+  try {
+    const response = await fetch("https://api.thecatapi.com/v1/breeds", {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fitch breeds!")
+    }
+
+    console.log(response);
+    
+    const breeds = await response.json();
+    console.log("List of Breeds: ", breeds);
+  
+    
+    //* Create new <options> for each of these breeds, and append them to breedSelect.
+      breeds.forEach(breed => {
+        const options = document.createElement("option");
+        options.value = breed.id; // each bread has an ID
+        options.textContent = breed.name; 
+        
+        options.classList.add("options-list")
+        breedSelect.appendChild(options);
+      })   
+    
+  } catch (error) {
+    console.error(error);
+  }
+})();
+
+//* This function should execute immediately.
+//? so in case this function should execute immediately we can use an Immediately Invoked Function Expression (IIFE).
+// so no need to call it later
+// initialLoad();
+
 
 /**
  * 2. Create an event handler for breedSelect that does the following:
@@ -36,6 +75,82 @@ const API_KEY = "";
  * - Each new selection should clear, re-populate, and restart the Carousel.
  * - Add a call to this function to the end of your initialLoad function above to create the initial carousel.
  */
+breedSelect.addEventListener("change", getBreedInfo)
+
+// https://api.thecatapi.com/v1/breeds
+// https://api.thecatapi.com/v1/images/search?breed_ids=beng
+// https://api.thecatapi.com/v1/images/search?limit=10&breed_ids=${e.target.value}&api_key=${API_KEY}}
+ 
+async function getBreedInfo (e) {
+  // const breedSelectedValue = breedSelect.value; // get the selected breed
+  const url = `https://api.thecatapi.com/v1/images/search?limit=10&breed_ids=${e.target.value}&api_key=${API_KEY}`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'x-api-key': API_KEY
+      }
+    });
+  
+    if (!response.ok) {
+      throw new Error("Failed to fetch breed info!");
+    }
+
+    const breedsData = await response.json();
+    console.log(breedsData);
+  
+
+    const carouselContent = document.getElementById("carouselInner");
+    carouselContent.innerHTML = "";
+    console.log(carouselContent);
+
+    
+  
+    breedsData.forEach((breed, index) => {
+      // Create a new carousel item for each breed image
+      const carouselElement = document.createElement("div");
+      carouselElement.classList.add("carousel-element");
+      if (index === 0) carouselElement.classList.add("active"); // First item active by default
+
+      const img = document.createElement("img");
+      img.src = breed.url;
+      img.alt = breed.breeds[0].name;
+      // img.classList.add("d-block", "w-100");
+      
+      //* Append each of these new elements to the carousel.
+      carouselElement.appendChild(img)
+      carouselContent.appendChild(carouselElement)
+
+      
+      // console.log(breed.url);
+      // console.log(breed.breeds[0].name);
+      // console.log(breed.breeds[0].description);
+      // console.log(breed.breeds[0].weight);
+      // console.log(breed.breeds[0].life_span);
+      // console.log(breed.breeds[0].origin);
+      // console.log(breed.breeds[0].temperament);
+    })
+    
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+
+
+
+
+// wrong understanding of the questions
+// getBreedInfo();
+// const breedInfo = document.getElementById("infoDump");
+// breedInfo.value = breed.breedInfo.id;
+// breedInfo.textContent = breed.breedInfo.origin;
+// breedSelect.appendChild(breedInfo)
+
+  
+
+
+
 
 /**
  * 3. Fork your own sandbox, creating a new one named "JavaScript Axios Lab."
