@@ -40,7 +40,7 @@ axios.get("/breeds")
     .then(response => {
         console.log(`API response: ${response}`);
         breeds = response.data;
-        console.log(`Breeds data: ${breeds}`);
+        // console.log(`Breeds data: ${breeds}`);
         // return "List of Breeds: ", breeds;
 
 
@@ -97,7 +97,7 @@ async function getBreedInfo (e) {
         onDownloadProgress: updateProgress // pass the function here
     });
     breedsData = response.data;
-    console.log(`Breeds data: ${breedsData}`);
+    // console.log(`Breeds data: ${breedsData}`);
 
     // axios.get(url)
     //     .then(response => {
@@ -213,6 +213,9 @@ axios.interceptors.request.use(request =>{
     request.metadata = request.metadata || {};
     request.metadata = { startTime: new Date().getTime() };
     console.log("Request started at: ", request.metadata.startTime);
+
+    // change the body cursor to indicate loading
+    document.body.style.cursor = "progress";
     
     return request;
 });
@@ -225,8 +228,11 @@ axios.interceptors.response.use(response => {
     
     // reset progress bar width and start at 0%
     setTimeout(() => {
+        document.body.style.cursor = "default";
         progressBar.style.width = "0%";
     }, 1500);
+
+    //
 
     return response;
 }, 
@@ -234,6 +240,10 @@ axios.interceptors.response.use(response => {
     error.config.metadata.endTime = new Date().getTime();
     error.durationInMS = error.config.metadata.endTime - error.config.metadata.startTime;
     console.log(`Request failed after ${error.durationInMS} milliseconds.`);
+
+    // Reset cursor to default even if request fails
+    document.body.style.cursor = "default";
+    
     return error;
 }
 )
@@ -284,9 +294,27 @@ function updateProgress(progressEvent) {
  *   you delete that favourite using the API, giving this function "toggle" functionality.
  * - You can call this function by clicking on the heart at the top right of any image.
  */
+
+/**
+ * @method post
+ */
+
 export async function favourite(imgId) {
-  // your code here
+    try {
+        const response = await axios.post("/favourites", {
+           image_id: imgId
+        });
+
+        console.log("Successfully Added to favorites", response);
+        return response
+        
+    } catch (error) {
+        // console.error("Error adding to favorite", error);
+        console.error("❌ API Error:", error.response ? error.response.data : error);
+    }
+  
 }
+// favourite()
 
 /**
  * 9. Test your favourite() function by creating a getFavourites() function.
