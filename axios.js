@@ -58,7 +58,7 @@ axios.get("/breeds")
           if (breeds.length > 0) {
               // Call getBreedInfo with the first breed
               getBreedInfo({ target: { value: breeds[0].id } });
-              buildCarousel(breeds);
+            //   buildCarousel(breeds);
           } else {
               console.error("No breeds found.");
           }
@@ -92,7 +92,10 @@ async function getBreedInfo (e) {
   let breedsData = [];
 
   try {
-    const response = await axios.get(url);
+    // progressBar.style.width = "0%";
+    const response = await axios.get(url, {
+        onDownloadProgress: updateProgress // pass the function here
+    });
     breedsData = response.data;
     console.log(`Breeds data: ${breedsData}`);
 
@@ -108,6 +111,8 @@ async function getBreedInfo (e) {
 
     infoDump.innerHTML = ""; // clear previous info
     
+    // call buildCarousel with the new images
+    buildCarousel(breedsData);
   
     breedsData.forEach((breed, index) => {
       // Create a new carousel item for each breed image
@@ -208,6 +213,7 @@ axios.interceptors.request.use(request =>{
     request.metadata = request.metadata || {};
     request.metadata = { startTime: new Date().getTime() };
     console.log("Request started at: ", request.metadata.startTime);
+    
     return request;
 });
 
@@ -216,6 +222,12 @@ axios.interceptors.response.use(response => {
     response.config.metadata.endTime = new Date().getTime();
     response.durationInMS = response.config.metadata.endTime - response.config.metadata.startTime;
     console.log(`Request took ${response.durationInMS} milliseconds`);
+    
+    // reset progress bar width and start at 0%
+    setTimeout(() => {
+        progressBar.style.width = "0%";
+    }, 1500);
+
     return response;
 }, 
 (error) => {
@@ -242,11 +254,25 @@ axios.interceptors.response.use(response => {
  *   with for future projects.
  */
 
+function updateProgress(progressEvent) {
+    if(progressEvent.lengthComputable){
+        const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+        progressBar.style.width = `${percentComplete}%`;
+        
+        console.log(progressEvent); // Log the entire ProgressEvent object to understand its structure
+    }
+}
+
+
+
 /**
  * 7. As a final element of progress indication, add the following to your axios interceptors:
  * - In your request interceptor, set the body element's cursor style to "progress."
  * - In your response interceptor, remove the progress cursor style from the body element.
  */
+
+
+
 /**
  * 8. To practice posting data, we'll create a system to "favourite" certain images.
  * - The skeleton of this function has already been created for you.
