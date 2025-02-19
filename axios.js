@@ -31,16 +31,15 @@ axios.defaults.headers.common['x-api-key'] = "live_iZsLSGdcv82tlUVsmGabE38syOMpz
 
 
 //* Now let's convert my fetch function
-(function initialLoad() {
+(async function initialLoad() {
+    let breeds = [];
 
-  let breeds = [];
-  //* Retrieve a list of breeds from the cat API using fetch().
-
-axios.get("/breeds")
-    .then(response => {
-        console.log(`API response: ${response}`);
-        breeds = response.data;
-        // console.log(`Breeds data: ${breeds}`);
+    //* Retrieve a list of breeds from the cat API using fetch().
+    try {
+        const response = await axios("/breeds")
+        console.log("API response: ", response);
+        breeds = await response.data;
+        console.log("Breeds data: ", breeds);
         // return "List of Breeds: ", breeds;
 
 
@@ -55,22 +54,19 @@ axios.get("/breeds")
           })   
 
 
-          if (breeds.length > 0) {
+          if (breeds.length > 0 && breeds[0].id) {
               // Call getBreedInfo with the first breed
               getBreedInfo({ target: { value: breeds[0].id } });
             //   buildCarousel(breeds);
-          } else {
-              console.error("No breeds found.");
-          }
-    })
-    .catch(error => {
+            favourite();
+            
+        } else {
+            console.error("No breeds found.");
+        }
+} catch(error) {
         console.error(`Error fetching breeds: ${error}`);
-    })
+    }
     
-// const response = await axios("/breeds");
-// console.log(response);
-// breeds = response.data;
-// console.log("List of Breeds: ", breeds);
 })();
 
 //* This function should execute immediately.
@@ -80,14 +76,14 @@ axios.get("/breeds")
 
 
 
-breedSelect.addEventListener("change", getBreedInfo)
+breedSelect.addEventListener("change", getBreedInfo);
 
 // https://api.thecatapi.com/v1/breeds
 // https://api.thecatapi.com/v1/images/search?breed_ids=beng
 // https://api.thecatapi.com/v1/images/search?limit=10&breed_ids=${e.target.value}&api_key=${API_KEY}}
  
 async function getBreedInfo (e) {
-  // const breedSelectedValue = breedSelect.value; // get the selected breed
+
   const url = `/images/search?limit=10&breed_ids=${e.target.value}`;
   let breedsData = [];
 
@@ -96,67 +92,52 @@ async function getBreedInfo (e) {
     const response = await axios.get(url, {
         onDownloadProgress: updateProgress // pass the function here
     });
-    breedsData = response.data;
-    // console.log(`Breeds data: ${breedsData}`);
 
-    // axios.get(url)
-    //     .then(response => {
-    //         breedsData = response.data;
-    //     })
-  
+    if (!response.data || response.data.length === 0) {
+        console.warn("No images found for this breed.");
+        return;
+    }
+
+    breedsData = await response.data;
+    console.log(`Breeds data: ${breedsData}`);
 
     const carouselContent = document.getElementById("carouselInner");
+    
     carouselContent.innerHTML = ""; // clear previous carousel items
     console.log(carouselContent);
 
     infoDump.innerHTML = ""; // clear previous info
+    Carousel.clear();
     
     // call buildCarousel with the new images
-    buildCarousel(breedsData);
+    // buildCarousel(breedsData);
+    infoDump.replaceChildren();
   
-    breedsData.forEach((breed, index) => {
-      // Create a new carousel item for each breed image
-      const carouselElement = document.createElement("div");
-      carouselElement.classList.add("carousel-item");
-      if (index === 0) carouselElement.classList.add("active"); // First item active by default
+    breedsData.forEach((breed) => {
+    carouselContent.appendChild(Carousel.createCarouselItem(breed.url, breed.breeds[0].name))
 
-      const img = document.createElement("img");
-      img.src = breed.url;
-      img.alt = breed.breeds[0].name;
-      img.classList.add("d-block", "w-100");
-      
-      //* Append each of these new elements to the carousel.
-      carouselElement.appendChild(img); // Add image to the carousel element
-      carouselContent.appendChild(carouselElement); // Append each carousel item to the carouselInner
+    
+    
+    //? Use the other data you have been given to create an informational section within the infoDump element.
+    const breedInfo = document.createElement("div");
+    breedInfo.classList.add("breed-info");
+    
+    breedInfo.innerHTML = `
+    <h2>${breed.breeds[0].name}</h2>
+    <p><strong>Origin:</strong> ${breed.breeds[0].origin}</p>
+    <p><strong>Weight:</strong> ${breed.breeds[0].weight.metric} kg</p>
+    <p><strong>Life Span:</strong> ${breed.breeds[0].life_span} years</p>
+    <p><strong>Temperament:</strong> ${breed.breeds[0].temperament}</p>
+    <p><strong>Description</strong>${breed.breeds[0].description}</p>
+    <a href=${breed.breeds[0].wikipedia_url} target="_blank">Learn more</a>
+    `;
+    
+    
+    infoDump.appendChild(breedInfo);
+})
 
-
-      //? Use the other data you have been given to create an informational section within the infoDump element.
-      const breedInfo = document.createElement("div");
-      breedInfo.classList.add("breed-info");
-
-      breedInfo.innerHTML = `
-      <h2>${breed.breeds[0].name}</h2>
-      <p><strong>Origin:</strong> ${breed.breeds[0].origin}</p>
-      <p><strong>Weight:</strong> ${breed.breeds[0].weight.metric} kg</p>
-      <p><strong>Life Span:</strong> ${breed.breeds[0].life_span} years</p>
-      <p><strong>Temperament:</strong> ${breed.breeds[0].temperament}</p>
-      <p><strong>Description</strong>${breed.breeds[0].description}</p>
-      <a href=${breed.breeds[0].wikipedia_url} target="_blank">Learn more</a>
-      `;
-
-      infoDump.appendChild(breedInfo);
-
-
-
-      
-      // console.log(breed.url);
-      // console.log(breed.breeds[0].name);
-      // console.log(breed.breeds[0].description);
-      // console.log(breed.breeds[0].weight);
-      // console.log(breed.breeds[0].life_span);
-      // console.log(breed.breeds[0].origin);
-      // console.log(breed.breeds[0].temperament);
-    });
+    
+    Carousel.start();
     
     // **Restart the carousel**
 
@@ -300,6 +281,14 @@ function updateProgress(progressEvent) {
  */
 
 export async function favourite(imgId) {
+
+    if (!imgId) {
+        console.log("No image ID provided.");
+        return;
+    }
+    console.log("image ID being sent: ", imgId);
+    
+
     try {
         const response = await axios.post("/favourites", {
            image_id: imgId

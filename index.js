@@ -118,22 +118,24 @@ async function getBreedInfo (e) {
     console.log(carouselContent);
 
     infoDump.innerHTML = ""; // clear previous info
+    Carousel.clear();
     
   
     breedsData.forEach((breed, index) => {
       // Create a new carousel item for each breed image
-      const carouselElement = document.createElement("div");
-      carouselElement.classList.add("carousel-item");
-      if (index === 0) carouselElement.classList.add("active"); // First item active by default
+      carouselContent.appendChild(Carousel.createCarouselItem(breed.url, breed.breeds[0].name));
+      // const carouselElement = document.createElement("div");
+      // carouselElement.classList.add("carousel-item");
+      // if (index === 0) carouselElement.classList.add("active"); // First item active by default
 
-      const img = document.createElement("img");
-      img.src = breed.url;
-      img.alt = breed.breeds[0].name;
-      img.classList.add("d-block", "w-100");
+      // const img = document.createElement("img");
+      // img.src = breed.url;
+      // img.alt = breed.breeds[0].name;
+      // img.classList.add("d-block", "w-100");
       
-      //* Append each of these new elements to the carousel.
-      carouselElement.appendChild(img); // Add image to the carousel element
-      carouselContent.appendChild(carouselElement); // Append each carousel item to the carouselInner
+      // //* Append each of these new elements to the carousel.
+      // carouselElement.appendChild(img); // Add image to the carousel element
+      // carouselContent.appendChild(carouselElement); // Append each carousel item to the carouselInner
 
 
       //? Use the other data you have been given to create an informational section within the infoDump element.
@@ -162,7 +164,8 @@ async function getBreedInfo (e) {
       // console.log(breed.breeds[0].life_span);
       // console.log(breed.breeds[0].origin);
       // console.log(breed.breeds[0].temperament);
-    });
+    })
+    Carousel.start();
     
     // **Restart the carousel**
 
